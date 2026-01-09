@@ -1,5 +1,3 @@
-# src/storage/models.py
-
 from sqlalchemy import Column, Integer, Float, String, DateTime
 from datetime import datetime
 from src.storage.db import Base

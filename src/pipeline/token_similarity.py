@@ -1,5 +1,3 @@
-# src/pipeline/token_similarity.py
-
 import re
 from typing import Set
 

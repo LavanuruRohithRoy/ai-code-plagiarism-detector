@@ -1,5 +1,3 @@
-# src/pipeline/normalizer.py
-
 import re
 from typing import Tuple
 

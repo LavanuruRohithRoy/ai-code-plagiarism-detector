@@ -1,5 +1,3 @@
-# src/pipeline/ast_analyzer.py
-
 import ast
 from typing import Dict
 

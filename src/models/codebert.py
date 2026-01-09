@@ -1,5 +1,3 @@
-# src/models/codebert.py
-
 from transformers import AutoTokenizer, AutoModel
 import torch
 

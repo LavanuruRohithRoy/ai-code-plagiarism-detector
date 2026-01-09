@@ -1,5 +1,3 @@
-# src/pipeline/scorer.py
-
 class ScoreAggregator:
     """
     Combines multiple similarity signals into final scores.

@@ -1,5 +1,3 @@
-# scripts/init_db.py
-
 from src.storage.db import engine
 from src.storage.models import Base
 

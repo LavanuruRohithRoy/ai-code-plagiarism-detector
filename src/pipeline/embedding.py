@@ -1,5 +1,3 @@
-# src/pipeline/embedding.py
-
 from src.models.codebert import CodeBERTModel
 
 
