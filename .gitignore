@@ -14,6 +14,7 @@ Thumbs.db
 # Data & embeddings
 data/
 *.faiss
+plagiarism.db
 
 # Logs
 *.log
