@@ -1,7 +1,10 @@
 from src.storage.db import SessionLocal
 from src.storage.models import AnalysisResult
+from sqlalchemy.exc import IntegrityError
 import json
-class AnalysisRepository:
+
+
+class AnalysisRepository: 
 
     def save_result(
         self,
@@ -22,6 +25,10 @@ class AnalysisRepository:
             )
             db.add(result)
             db.commit()
+
+        except IntegrityError:
+            db.rollback()
+
         finally:
             db.close()
 

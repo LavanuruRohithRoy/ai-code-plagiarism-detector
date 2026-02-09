@@ -18,13 +18,13 @@ This mirrors how real plagiarism engines work in academic and enterprise environ
 
 ## 🧠 What This System Does
 
-✅ Accepts source code as input
-✅ Normalizes and parses code
-✅ Performs **AST‑based structural analysis**
-✅ Computes **token‑level similarity**
-✅ Generates **semantic embeddings** using pretrained transformers
-✅ Performs fast similarity search using **FAISS**
-✅ Produces plagiarism scores and confidence metrics
+* ✅ Accepts source code as input
+* ✅ Normalizes and parses code
+* ✅ Performs **AST‑based structural analysis**
+* ✅ Computes **token‑level similarity**
+* ✅ Generates **semantic embeddings** using pretrained transformers
+* ✅ Performs fast similarity search using **FAISS**
+* ✅ Produces plagiarism scores and confidence metrics
 
 ---
 
@@ -98,7 +98,7 @@ ai-code-plagiarism-detector/
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone <your-repo-url>
+git clone <https://github.com/LavanuruRohithRoy/ai-code-plagiarism-detector.git>
 cd ai-code-plagiarism-detector
 ```
 
@@ -130,8 +130,6 @@ pip install -r requirements.txt
 ---
 
 ## 📊 Evaluation Results & Visualizations
-
-> 📁 Place images inside `assets/` folder and update paths if needed.
 
 ### 📦 Plagiarism Percentage Distribution
 
@@ -194,3 +192,4 @@ This system measures **code similarity and reuse**, not authorship verification.
 ---
 
 🚧 **Project Status:** Actively under development
+
