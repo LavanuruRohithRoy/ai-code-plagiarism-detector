@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, DateTime, Text
+from sqlalchemy import Column, Integer, Float, String, DateTime, Text, LargeBinary
 from datetime import datetime
 from src.storage.db import Base
 
@@ -7,9 +7,16 @@ class AnalysisResult(Base):
     __tablename__ = "analysis_results"
 
     id = Column(Integer, primary_key=True, index=True)
+
     code_hash = Column(String, unique=True, index=True)
+
     plagiarism_score = Column(Float)
     ai_probability = Column(Float)
+
     normalized_code = Column(Text)
     ast_features = Column(Text)
+
+    # NEW: stores embedding vector
+    embedding = Column(LargeBinary)
+
     created_at = Column(DateTime, default=datetime.utcnow)
