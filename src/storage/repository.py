@@ -1,6 +1,7 @@
 from src.storage.db import SessionLocal
 from src.storage.models import AnalysisResult
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
 import json
 import numpy as np
 
@@ -96,6 +97,20 @@ class AnalysisRepository:
                     embeddings.append(vector)
 
             return embeddings
+
+        finally:
+            db.close()
+
+    def count_embeddings(self) -> int:
+        db = SessionLocal()
+
+        try:
+            return (
+                db.query(func.count(AnalysisResult.id))
+                .filter(AnalysisResult.embedding.isnot(None))
+                .scalar()
+                or 0
+            )
 
         finally:
             db.close()

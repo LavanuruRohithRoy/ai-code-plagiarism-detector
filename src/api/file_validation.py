@@ -9,13 +9,26 @@ MAX_CODE_CHARS = 50000
 MAX_FILE_BYTES = 200 * 1024
 MAX_FILES_PER_BATCH = 25
 MAX_NON_EMPTY_LOC = 1500
-ALLOWED_EXTENSIONS = {".py", ".java", ".js", ".ts", ".cpp", ".c", ".go", ".rs"}
+ALLOWED_EXTENSIONS = {
+    ".py",
+    ".java",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".cpp",
+    ".c",
+    ".go",
+    ".rs",
+}
 
 EXTENSION_LANGUAGE_MAP = {
     ".py": "python",
     ".java": "java",
     ".js": "javascript",
+    ".jsx": "javascript",
     ".ts": "typescript",
+    ".tsx": "typescript",
     ".cpp": "cpp",
     ".c": "c",
     ".go": "go",

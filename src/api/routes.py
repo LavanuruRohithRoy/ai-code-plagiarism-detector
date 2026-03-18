@@ -68,7 +68,11 @@ async def analyze_file(
     if validation_error:
         raise HTTPException(status_code=400, detail=validation_error)
 
-    result = pipeline.run(code=decoded, language=language, input_metrics=metrics)
+    try:
+        result = pipeline.run(code=decoded, language=language, input_metrics=metrics)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to analyze file: {exc}") from exc
+
     return FileAnalyzeResponse(
         filename=filename,
         language=language,

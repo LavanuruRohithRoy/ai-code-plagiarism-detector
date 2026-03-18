@@ -18,6 +18,9 @@ class AnalyzeExplanation(BaseModel):
     metrics: Optional[dict[str, int]] = None
     signal_bands: Optional[dict[str, str]] = None
     highlights: Optional[list[dict[str, str | int]]] = None
+    source_code: Optional[str] = None
+    highlight_legend: Optional[dict[str, str]] = None
+    known_match: Optional[dict[str, str]] = None
     reasoning: str
 
 

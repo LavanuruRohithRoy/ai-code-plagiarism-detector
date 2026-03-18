@@ -1,15 +1,15 @@
-plagiarism_semantic_weight: 0.4
-plagiarism_token_weight: 0.3
-plagiarism_structure_weight: 0.3
+plagiarism_semantic_weight: 0.35
+plagiarism_token_weight: 0.4
+plagiarism_structure_weight: 0.25
 
-ai_semantic_weight: 0.6
-ai_structure_weight: 0.4
+ai_semantic_weight: 0.45
+ai_structure_weight: 0.25
 
-high_confidence_min_similarity: 0.8
-high_confidence_max_spread: 0.2
-high_confidence_min_lines: 12
+high_confidence_min_similarity: 0.85
+high_confidence_max_spread: 0.18
+high_confidence_min_lines: 14
 
-medium_confidence_min_similarity: 0.5
-medium_confidence_min_lines: 6
+medium_confidence_min_similarity: 0.58
+medium_confidence_min_lines: 8
 
 low_confidence_max_lines: 4

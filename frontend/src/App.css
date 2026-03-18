@@ -1,0 +1,19 @@
+.app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Smooth transitions between pages */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.upload-page,
+.results-page {
+  animation: fadeIn var(--transition-slow);
+}

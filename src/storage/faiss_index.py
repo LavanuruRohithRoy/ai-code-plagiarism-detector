@@ -1,5 +1,6 @@
 import faiss
 import numpy as np
+from pathlib import Path
 
 
 class FaissIndex:
@@ -34,7 +35,11 @@ class FaissIndex:
     def size(self):
         return self.index.ntotal
 
+    def clear(self):
+        self.index = faiss.IndexFlatIP(self.vector_dim)
+
     def rebuild(self, embeddings):
+        self.index = faiss.IndexFlatIP(self.vector_dim)
 
         if not embeddings:
             return
@@ -43,9 +48,24 @@ class FaissIndex:
 
         # normalize all vectors
         faiss.normalize_L2(vectors)
-
-        self.index = faiss.IndexFlatIP(self.vector_dim)
         self.index.add(vectors)
+
+    def save(self, path: str) -> None:
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        faiss.write_index(self.index, str(target))
+
+    def load(self, path: str) -> bool:
+        target = Path(path)
+        if not target.exists():
+            return False
+
+        index = faiss.read_index(str(target))
+        if getattr(index, "d", None) != self.vector_dim:
+            return False
+
+        self.index = index
+        return True
 
 
 # Global shared FAISS instance
