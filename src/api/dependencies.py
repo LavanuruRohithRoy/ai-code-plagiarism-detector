@@ -6,12 +6,13 @@ from pathlib import Path
 from src.pipeline.orchestrator import AnalysisPipeline
 from src.storage.faiss_index import faiss_index
 from src.storage.repository import AnalysisRepository
+from src.utils.paths import get_embeddings_dir
 
 
 _repository = AnalysisRepository()
 _pipeline = AnalysisPipeline()
 
-_FAISS_CACHE_DIR = Path("data/embeddings")
+_FAISS_CACHE_DIR = get_embeddings_dir()
 _FAISS_INDEX_FILE = _FAISS_CACHE_DIR / "faiss.index"
 _FAISS_META_FILE = _FAISS_CACHE_DIR / "faiss.meta.json"
 

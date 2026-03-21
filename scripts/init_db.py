@@ -1,3 +1,8 @@
+import os
+import sys
+
+sys.path.append(os.path.abspath("."))
+
 from src.storage.db import engine
 from src.storage.models import Base
 

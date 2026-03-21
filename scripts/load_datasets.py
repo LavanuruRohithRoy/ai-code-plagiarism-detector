@@ -29,7 +29,7 @@ def detect_language(path: Path) -> str | None:
 
 
 def collect_from_filesystem() -> list[tuple[Path, str]]:
-	roots = [Path("data/raw/ai"), Path("data/raw/human")]
+	roots = [Path("/app/data/raw/ai"), Path("/app/data/raw/human")]
 	collected: list[tuple[Path, str]] = []
 
 	for root in roots:
@@ -89,7 +89,7 @@ def parse_args() -> argparse.Namespace:
 	)
 	parser.add_argument(
 		"--csv-path",
-		default="data/results/evaluation_results.csv",
+		default="/app/data/results/evaluation_results.csv",
 		help="CSV file path used when source is csv/auto.",
 	)
 	parser.add_argument(

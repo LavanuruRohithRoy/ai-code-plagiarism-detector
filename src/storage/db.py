@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from src.utils.paths import get_db_path
 
-DATABASE_URL = "sqlite:///./plagiarism.db"
+DATABASE_URL = f"sqlite:///{get_db_path().as_posix()}"
 
 engine = create_engine(
     DATABASE_URL,

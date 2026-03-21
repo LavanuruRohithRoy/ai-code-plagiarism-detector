@@ -9,10 +9,11 @@ sys.path.append(os.path.abspath("."))
 
 from src.pipeline.dataset_matcher import DatasetMatcher
 from src.api.dependencies import sync_faiss_with_db
+from src.utils.paths import get_db_path
 
 
 def main() -> None:
-	db_path = Path("plagiarism.db")
+	db_path = get_db_path()
 	if not db_path.exists():
 		print("❌ plagiarism.db not found")
 		return

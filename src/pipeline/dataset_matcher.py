@@ -5,11 +5,12 @@ from pathlib import Path
 
 from src.api.file_validation import EXTENSION_LANGUAGE_MAP, normalize_language
 from src.pipeline.normalizer import CodeNormalizer
+from src.utils.paths import get_raw_data_dir
 
 
 class DatasetMatcher:
-    def __init__(self, root: str = "data/raw", normalizer: CodeNormalizer | None = None):
-        self.root = Path(root)
+    def __init__(self, root: str | Path | None = None, normalizer: CodeNormalizer | None = None):
+        self.root = Path(root) if root is not None else get_raw_data_dir()
         self.normalizer = normalizer or CodeNormalizer()
         self._index: dict[str, dict[str, str]] = {}
         self._build_index()

@@ -13,6 +13,7 @@ from src.pipeline.dataset_matcher import DatasetMatcher
 
 from src.storage.repository import AnalysisRepository
 from src.storage.faiss_index import faiss_index
+from src.utils.paths import get_embeddings_dir
 
 
 class AnalysisPipeline:
@@ -125,6 +126,23 @@ class AnalysisPipeline:
             "plagiarism": "Red highlights indicate segments strongly associated with overlap/similarity to known corpus patterns.",
             "ai-detected": "Yellow highlights indicate segments with AI-like stylistic or structural signals.",
         }
+
+    def _persist_faiss_cache(self) -> None:
+        try:
+            cache_dir = get_embeddings_dir()
+            cache_dir.mkdir(parents=True, exist_ok=True)
+
+            index_file = cache_dir / "faiss.index"
+            meta_file = cache_dir / "faiss.meta.json"
+
+            self.faiss_index.save(str(index_file))
+            embedding_count = self.repo.count_embeddings()
+            meta_file.write_text(
+                json.dumps({"embedding_count": int(embedding_count)}, indent=2),
+                encoding="utf-8",
+            )
+        except Exception:
+            pass
 
     def _build_exact_match_response(
         self,
@@ -337,6 +355,7 @@ class AnalysisPipeline:
 
         if inserted:
             self.faiss_index.add(vector)
+            self._persist_faiss_cache()
 
         # -------------------------
         # Reasoning text

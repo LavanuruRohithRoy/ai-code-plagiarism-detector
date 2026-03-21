@@ -19,9 +19,9 @@ from src.pipeline.token_similarity import TokenSimilarity
 from src.api.file_validation import EXTENSION_LANGUAGE_MAP, normalize_language
 
 
-HUMAN_DIR = "data/raw/human"
-AI_DIR = "data/raw/ai"
-OUTPUT_FILE = "data/results/evaluation_results.csv"
+HUMAN_DIR = "/app/data/raw/human"
+AI_DIR = "/app/data/raw/ai"
+OUTPUT_FILE = "/app/data/results/evaluation_results.csv"
 
 
 @dataclass
