@@ -37,8 +37,15 @@ Thumbs.db
 *.swo
 
 # Data & embeddings
+runtime/
 data/
+*.db
 *.faiss
+*.index
+*.npy
+*.pt
+*.bin
+*.csv
 plagiarism.db
 plagiarism.db.bak
 
