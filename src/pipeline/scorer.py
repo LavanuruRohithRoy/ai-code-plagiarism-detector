@@ -31,6 +31,13 @@ class ScoreAggregator:
             self.thresholds.ai_semantic_weight * semantic_similarity +
             self.thresholds.ai_structure_weight * structure_similarity
         )
+        total_weight = (
+            self.thresholds.ai_semantic_weight +
+            self.thresholds.ai_structure_weight
+        )
+        if total_weight > 0:
+            ai_score = ai_score / total_weight
+
         return round(max(0.0, min(100.0, ai_score * 100)), 2)
 
     def compute_confidence(

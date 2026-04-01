@@ -1,132 +1,148 @@
-# 🚀 AI Code Plagiarism Detector
+# AI Code Plagiarism Detector
 
-> Multi-signal code similarity analysis with FastAPI, CodeBERT, FAISS, SQLite, and a React frontend.
+Multi-signal code similarity analysis platform using FastAPI, CodeBERT, FAISS, SQLite, and a React frontend.
 
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.128.0-green.svg)](https://fastapi.tiangolo.com/)
-[![Frontend](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61dafb.svg)](https://vitejs.dev/)
+## 1. Project Summary
 
----
+This system evaluates similarity using layered signals instead of plain text matching:
 
-## ✨ Overview
+- Semantic similarity from transformer embeddings (CodeBERT)
+- Token overlap via Jaccard similarity
+- Structural similarity via AST (Python) and heuristic extraction (non-Python)
+- Exact normalized corpus matching for known samples
 
-This system analyzes code using **multiple independent signals** instead of plain string matching:
-- **Semantic similarity** (CodeBERT embeddings + FAISS nearest-neighbor search)
-- **Token overlap** (Jaccard similarity)
-- **Structural similarity** (AST features / heuristic structure features)
-- **Exact corpus match** (normalized hash lookup over dataset files)
+The output includes:
 
-The output is a weighted similarity interpretation (`plagiarism_percentage`, `ai_probability`, `confidence`) with explainable details, source code rendering, and highlights.
+- plagiarism_percentage
+- ai_probability
+- confidence
+- explanation payload (signal values, reasoning, highlights, metrics)
 
----
+## 2. System Ends
 
-## 🧠 How the System Works
+- Frontend: file/code submission, result visualization, export
+- Backend API: validation, orchestration, response shaping
+- Similarity Engine: normalization + feature extraction + vector search + scoring
+- Persistence: SQLite for records, FAISS for runtime nearest-neighbor search
+- Runtime: local mode and Docker mode with persistent mounts
 
-### 1) Startup flow
-When backend starts:
-1. FastAPI app initializes.
-2. Shared pipeline is created (normalizer, AST, token sim, embedder, scorer, dataset matcher).
-3. FAISS sync runs:
-   - If cached FAISS index metadata matches DB embedding count, load cache quickly.
-   - Else rebuild FAISS from SQLite embeddings and refresh cache.
+## 3. High-Level Architecture
 
-### 2) Request flow (`/analyze`, `/analyze/file`, `/analyze/files`)
-1. Validate code/file + detect language.
-2. Normalize code.
-3. Exact normalized hash match against dataset corpus (`data/raw`).
-4. If no exact match:
-   - compute embedding,
-   - semantic similarity from FAISS,
-   - token + structural similarity from stored records.
-5. Aggregate scores + confidence.
-6. Return explanation payload with metrics, highlights, legend, and reasoning.
-7. Persist new record to SQLite and keep FAISS consistent.
+```mermaid
+flowchart TD
+        A[Frontend React + Vite] --> B[FastAPI API]
+        B --> C[Validation + Language Normalization]
+        C --> D[AnalysisPipeline]
 
----
+        D --> E[Code Normalizer]
+        D --> F[Dataset Matcher Exact Normalized Match]
+        D --> G[Embedding Generator CodeBERT]
+        D --> H[Token Similarity Jaccard]
+        D --> I[AST or Heuristic Structure Features]
+        D --> J[FAISS Semantic Search]
+        D --> K[Score Aggregator]
 
-## 🏗️ Architecture (High Level)
+        K --> L[Response JSON with explanation]
 
-```text
-Client (React)
-   │
-   ▼
-FastAPI API layer (validation, routing)
-   │
-   ▼
-AnalysisPipeline
-   ├─ Normalizer
-   ├─ DatasetMatcher (exact normalized hash)
-   ├─ EmbeddingGenerator (CodeBERT)
-   ├─ TokenSimilarity
-   ├─ StructureFeatures / AST
-   └─ ScoreAggregator
-   │
-   ├─ SQLite (persistent results + embeddings)
-   └─ FAISS (runtime vector search, cached on disk)
+        D --> M[(SQLite)]
+        D --> N[(FAISS Index)]
+        M --> O[Startup Sync]
+        O --> N
 ```
 
----
-
-## 📂 Workspace Structure
+## 4. Workspace Structure
 
 ```text
 ai-code-plagiarism-detector/
-├── src/
-│   ├── api/
-│   │   ├── main.py
-│   │   ├── routes.py
-│   │   ├── schemas.py
-│   │   ├── dependencies.py
-│   │   └── file_validation.py
-│   ├── models/
-│   │   ├── codebert.py
-│   │   ├── codet5.py
-│   │   └── tokenizer.py
-│   ├── pipeline/
-│   │   ├── orchestrator.py
-│   │   ├── dataset_matcher.py
-│   │   ├── embedding.py
-│   │   ├── faiss_search.py
-│   │   ├── normalizer.py
-│   │   ├── scorer.py
-│   │   ├── structure_features.py
-│   │   └── token_similarity.py
-│   ├── storage/
-│   │   ├── db.py
-│   │   ├── models.py
-│   │   ├── repository.py
-│   │   └── faiss_index.py
-│   └── utils/
-├── frontend/
-│   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   ├── pages/
-│   │   ├── styles/
-│   │   └── utils/
-│   └── ...
-├── scripts/
-│   ├── init_db.py
-│   ├── load_datasets.py
-│   ├── build_faiss_index.py
-│   ├── evaluate_dataset.py
-│   ├── analyze_results.py
-│   ├── plot_results.py
-│   └── sanity_check.py
-├── configs/
-├── data/
-│   ├── raw/
-│   ├── results/
-│   └── embeddings/
-├── tests/
-├── plagiarism.db
-└── README.md
+|-- src/
+|   |-- api/
+|   |-- models/
+|   |-- pipeline/
+|   |-- storage/
+|   `-- utils/
+|-- frontend/
+|   `-- src/
+|-- scripts/
+|-- configs/
+|-- data/
+|   |-- raw/
+|   |-- embeddings/
+|   |-- processed/
+|   `-- results/
+|-- docker/
+|-- tests/
+|-- docker-compose.yml
+`-- requirements.txt
 ```
 
----
+## 5. Processing Pipeline
 
-## ⚙️ Setup
+### 5.1 Startup pipeline
+
+1. FastAPI starts and builds shared dependencies.
+2. Analysis pipeline is initialized.
+3. FAISS/DB synchronization runs:
+     - If cached FAISS metadata matches DB embedding count, cache is loaded.
+     - Otherwise FAISS is rebuilt from DB embeddings and cache is refreshed.
+
+### 5.2 Request pipeline
+
+1. Validate request and normalize language.
+2. Normalize code for canonical comparison.
+3. Try exact normalized corpus match.
+4. If no exact match:
+     - create embedding
+     - run FAISS semantic retrieval
+     - compute token and structure similarity against stored records
+5. Aggregate scores and confidence.
+6. Return explanation payload.
+7. Persist result and incrementally update FAISS cache.
+
+## 6. API Reference
+
+- POST /analyze/
+    Description: analyze JSON payload with code and optional language.
+
+- POST /analyze/file
+    Description: analyze a single uploaded file.
+
+- POST /analyze/files
+    Description: analyze a batch of uploaded files.
+
+- GET /health
+    Description: service health check.
+
+Supported extensions:
+
+- .py, .java, .js, .jsx, .ts, .tsx, .cpp, .c, .go, .rs
+
+## 7. Scoring Model and Interpretation
+
+Final outputs:
+
+- plagiarism_percentage: overlap-oriented similarity estimate
+- ai_probability: AI-style pattern estimate
+- confidence: low/medium/high confidence band
+
+Interpretation notes:
+
+- Exact corpus matches can drive high plagiarism scores.
+- ai_probability is conservative for short/low-agreement code.
+- Size penalties and damping are intentionally applied to reduce overconfident false positives.
+- ai_probability is normalized to configured AI weight totals for better score-range representation.
+
+## 8. FAISS and DB Synchronization Model
+
+The system maintains balance between persistent storage and vector index state:
+
+- SQLite stores canonical analysis records and serialized embeddings.
+- FAISS stores normalized embedding vectors for fast nearest-neighbor retrieval.
+- Startup sync checks DB embedding count against cached FAISS metadata.
+- Request-time insert path updates DB first, then FAISS, then persists FAISS cache metadata.
+
+This design ensures runtime speed while preserving reproducibility across restarts.
+
+## 9. Local Setup
 
 ### Backend
 
@@ -139,6 +155,7 @@ source venv/bin/activate
 
 pip install -r requirements.txt
 python scripts/init_db.py
+uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 ### Frontend
@@ -148,195 +165,112 @@ cd frontend
 npm install
 ```
 
-Create `frontend/.env.local`:
+Create frontend/.env.local:
 
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
 
----
-
-## ▶️ Run
-
-### Backend
+Run frontend:
 
 ```bash
-uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-### Frontend
-
-```bash
-cd frontend
 npm run dev
 ```
 
-- API: `http://127.0.0.1:8000`
-- Docs: `http://127.0.0.1:8000/docs`
-- Frontend: `http://127.0.0.1:3000`
+Default endpoints:
 
----
+- API: http://127.0.0.1:8000
+- API Docs: http://127.0.0.1:8000/docs
+- Frontend: http://127.0.0.1:3000
 
-## 📡 API Endpoints
+## 10. Docker Setup
 
-- `POST /analyze/` — analyze raw JSON code
-- `POST /analyze/file` — analyze one uploaded file
-- `POST /analyze/files` — analyze up to 25 files
-- `GET /health` — service health
-
-Supported upload extensions:
-- `.py`, `.java`, `.js`, `.jsx`, `.ts`, `.tsx`, `.cpp`, `.c`, `.go`, `.rs`
-
----
-
-## 🧪 Dataset Ingestion (Optimized)
-
-Use `scripts/load_datasets.py`.
-
-### Key behavior
-- **Incremental**: checks `code_hash` in DB before expensive embedding generation.
-- **Source options**:
-  - `auto` (default): prefers evaluation CSV file list, falls back to filesystem scan.
-  - `csv`: use `data/results/evaluation_results.csv` (or custom path).
-  - `filesystem`: scan `data/raw` directly.
-- Optional FAISS rebuild via `--rebuild-faiss`.
-
-### Commands
+Build and run:
 
 ```bash
-# default (csv-first, fallback to filesystem)
+docker compose build
+docker compose up -d
+```
+
+Service endpoints:
+
+- Backend: http://localhost:8000
+- Frontend: http://localhost:3000
+
+Persistent runtime mounts:
+
+- runtime/db -> SQLite DB
+- runtime/data -> raw corpus and FAISS cache files
+- runtime/hf_cache -> Hugging Face cache
+
+## 11. Data Operations and Evaluation
+
+### Incremental dataset load
+
+```bash
 python scripts/load_datasets.py --source auto
+```
 
-# force filesystem scan (still incremental insert)
+Variants:
+
+```bash
 python scripts/load_datasets.py --source filesystem
-
-# force csv path
 python scripts/load_datasets.py --source csv --csv-path data/results/evaluation_results.csv
-
-# run load + rebuild faiss
 python scripts/load_datasets.py --source filesystem --rebuild-faiss
 ```
 
----
-
-## 🗄️ DB + FAISS Consistency
-
-### Health check
+### Sanity and index checks
 
 ```bash
 python scripts/sanity_check.py
-```
-
-Reports:
-- DB rows
-- null embeddings
-- empty code/hash fields
-- dataset matcher entries
-- FAISS vector count after sync
-
-### FAISS-only rebuild
-
-```bash
 python scripts/build_faiss_index.py
 ```
 
-### Startup caching
-FAISS cache files:
-- `data/embeddings/faiss.index`
-- `data/embeddings/faiss.meta.json`
-
-If DB embedding count hasn’t changed, server startup loads FAISS cache instead of rebuilding.
-
----
-
-## 🖥️ Frontend Highlights
-
-Results page includes:
-- Source code rendering with character-level highlight overlays
-- Legend explaining what each highlight color means
-- Known dataset match metadata (when exact normalized match exists)
-- Tab navigation (Code & Analysis / Metrics)
-- Export actions:
-  - JSON file
-  - CSV file
-  - PDF print view
-
----
-
-## 🔧 Configuration
-
-- `configs/settings.yaml`: docs/openapi URLs
-- `configs/thresholds.yaml`: scoring weights + confidence thresholds
-
-Use thresholds to tune sensitivity and confidence behavior.
-
----
-
-## 📊 Evaluation Highlights
-
-The following generated plots are the most useful quick checks after running:
+### Evaluation workflow
 
 ```bash
 python scripts/evaluate_dataset.py
 python scripts/plot_results.py
 ```
 
-### 1) Plagiarism score distribution
+Outputs are generated under data/results and assets.
 
-![Plagiarism Boxplot](assets/plagiarism_boxplot.png)
+## 12. Frontend Feature Surface
 
-- Shows spread/median of plagiarism scores across evaluated samples.
-- Useful to check whether score ranges are stable after threshold changes.
+- Single and batch analysis
+- Result cards and signal metrics panel
+- Source-code highlight overlays
+- Export support (JSON, CSV, print)
 
-### 2) AI probability distribution
+## 13. Practical Usage Scope
 
-![AI Probability Boxplot](assets/ai_probability_boxplot.png)
+Suitable for:
 
-- Shows how strongly samples trend toward AI-like signals.
-- Useful for spotting over-aggressive AI probability tuning.
+- Similarity triage
+- Pattern exploration
+- Reviewer-assist workflows
 
-### 3) AI affinity (cross-label preference)
+Not designed as:
 
-![AI Affinity Boxplot](assets/ai_affinity_boxplot.png)
+- standalone legal decision engine
+- direct disciplinary automation
 
-- Summarizes cross-label preference behavior from evaluation output.
-- Useful to verify separation quality between human and AI-style clusters.
+## 14. Tracking Section (Legacy-Style Reference)
 
-### 4) Cross vs same-label semantic similarity
-
-![Cross vs Same Similarity Scatter](assets/cross_vs_same_similarity_scatter.png)
-
-- Visual sanity check for similarity separation behavior.
-- Helpful when adjusting similarity weights in `configs/thresholds.yaml`.
-
----
-
-## ⚠️ Interpretation Notes
-
-- Similarity score is a **pattern overlap metric**, not legal proof of plagiarism.
-- AI probability is a **signal blend output**, not an authorship guarantee.
-- `data/results/evaluation_results.csv` contains evaluation metrics, not FAISS-ready vector state.
-
----
-
-## 🔄 Fresh Reset (Clean Start)
+### Fresh reset (clean start)
 
 ```powershell
-# stop backend first
-Remove-Item .\plagiarism.db -Force
-Remove-Item .\data\embeddings\faiss.index -Force -ErrorAction SilentlyContinue
-Remove-Item .\data\embeddings\faiss.meta.json -Force -ErrorAction SilentlyContinue
+Remove-Item .\runtime\db\plagiarism.db -Force -ErrorAction SilentlyContinue
+Remove-Item .\runtime\data\embeddings\faiss.index -Force -ErrorAction SilentlyContinue
+Remove-Item .\runtime\data\embeddings\faiss.meta.json -Force -ErrorAction SilentlyContinue
 python scripts/init_db.py
 uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
----
+### Current status
 
-## ✅ Current Status
+- Backend API, similarity pipeline, persistence, and FAISS sync are integrated.
+- Frontend analysis and export flow is integrated.
+- Incremental dataset ingestion and evaluation tooling are available.
 
-Core system is functional end-to-end:
-- backend API, similarity pipeline, persistence, and FAISS sync
-- frontend upload/results/exports flow
-- incremental dataset ingestion and sanity tooling
-
-Last updated: March 18, 2026
+Last updated: April 1, 2026

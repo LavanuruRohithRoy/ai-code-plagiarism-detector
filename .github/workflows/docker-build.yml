@@ -2,43 +2,50 @@ name: Build Docker Images
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
       packages: write
 
-    steps:
+    env:
+      BACKEND_IMAGE: ghcr.io/lavanururohithroy/ai-code-plagiarism-detector/backend:latest
+      FRONTEND_IMAGE: ghcr.io/lavanururohithroy/ai-code-plagiarism-detector/frontend:latest
 
-      - name: Checkout repo
-        uses: actions/checkout@v3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build backend image
+      # ---------- BACKEND ----------
+
+      - name: Build backend
         run: |
           docker build \
           -f docker/backend.Dockerfile \
-          -t ghcr.io/${{ github.repository }}/backend:latest \
+          -t $BACKEND_IMAGE \
           .
 
-      - name: Push backend image
+      - name: Push backend
         run: |
-          docker push ghcr.io/${{ github.repository }}/backend:latest
+          docker push $BACKEND_IMAGE
 
-      - name: Build frontend image
+      # ---------- FRONTEND ----------
+
+      - name: Build frontend
         run: |
           docker build \
           -f docker/frontend.Dockerfile \
-          -t ghcr.io/${{ github.repository }}/frontend:latest \
+          -t $FRONTEND_IMAGE \
           .
 
-      - name: Push frontend image
+      - name: Push frontend
         run: |
-          docker push ghcr.io/${{ github.repository }}/frontend:latest
+          docker push $FRONTEND_IMAGE
