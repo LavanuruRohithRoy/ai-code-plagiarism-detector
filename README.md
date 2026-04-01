@@ -28,26 +28,32 @@ The output includes:
 
 ## 3. High-Level Architecture
 
-```mermaid
-flowchart TD
-        A[Frontend React + Vite] --> B[FastAPI API]
-        B --> C[Validation + Language Normalization]
-        C --> D[AnalysisPipeline]
+```text
+Frontend (React + Vite)
+    |
+    v
+FastAPI API Layer
+    |
+    v
+Validation + Language Normalization
+    |
+    v
+AnalysisPipeline
+    |- Code Normalizer
+    |- Dataset Matcher (exact normalized match)
+    |- Embedding Generator (CodeBERT)
+    |- Token Similarity (Jaccard)
+    |- AST/Heuristic Structure Features
+    |- FAISS Semantic Search
+    `- Score Aggregator
+    |
+    +--> SQLite (analysis records + embedding bytes)
+    `--> FAISS Index (runtime vector retrieval)
 
-        D --> E[Code Normalizer]
-        D --> F[Dataset Matcher Exact Normalized Match]
-        D --> G[Embedding Generator CodeBERT]
-        D --> H[Token Similarity Jaccard]
-        D --> I[AST or Heuristic Structure Features]
-        D --> J[FAISS Semantic Search]
-        D --> K[Score Aggregator]
-
-        K --> L[Response JSON with explanation]
-
-        D --> M[(SQLite)]
-        D --> N[(FAISS Index)]
-        M --> O[Startup Sync]
-        O --> N
+Startup Sync:
+SQLite embedding count <-> FAISS cache metadata
+cache hit => load index
+cache miss => rebuild from DB embeddings
 ```
 
 ## 4. Workspace Structure
@@ -234,6 +240,36 @@ python scripts/plot_results.py
 ```
 
 Outputs are generated under data/results and assets.
+
+### Evaluation plots
+
+#### 1) Plagiarism score distribution
+
+![Plagiarism Boxplot](assets/plagiarism_boxplot.png)
+
+- Shows score spread and median across evaluated samples.
+- Useful for checking score stability after threshold changes.
+
+#### 2) AI probability distribution
+
+![AI Probability Boxplot](assets/ai_probability_boxplot.png)
+
+- Shows how strongly samples trend toward AI-style patterns.
+- Useful for validating AI probability calibration behavior.
+
+#### 3) AI affinity (cross-label preference)
+
+![AI Affinity Boxplot](assets/ai_affinity_boxplot.png)
+
+- Summarizes cross-label preference behavior from evaluation output.
+- Useful for checking cluster separation trends.
+
+#### 4) Cross-label vs same-label semantic similarity
+
+![Cross vs Same Similarity Scatter](assets/cross_vs_same_similarity_scatter.png)
+
+- Visual sanity check for semantic separation behavior.
+- Useful when tuning thresholds or weighting strategy.
 
 ## 12. Frontend Feature Surface
 
