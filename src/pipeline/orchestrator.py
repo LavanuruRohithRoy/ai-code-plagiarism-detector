@@ -1,6 +1,7 @@
 import hashlib
 import json
 import re
+from pathlib import Path
 
 from src.pipeline.normalizer import CodeNormalizer
 from src.pipeline.ast_analyzer import ASTAnalyzer
@@ -70,20 +71,16 @@ class AnalysisPipeline:
         token_sim: float,
         semantic_sim: float,
         structure_sim: float,
+        matched_code: str | None = None,
     ) -> list[dict[str, str | int]]:
-        """
-        Generate highlights showing matched code regions.
-        Highlights indicate:
-        - plagiarism: segments matching corpus patterns (token/semantic overlap)
-        - ai-detected: segments with AI-like structural characteristics
-        """
         highlights: list[dict[str, str | int]] = []
-        
+
         if not normalized_code:
             return highlights
 
         lines = normalized_code.splitlines()
         offsets = self._line_char_offsets(normalized_code)
+        matched_tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*|\d+", (matched_code or "").lower()))
 
         # If size penalty applies, mark entire code as plagiarism match
         if size_penalty:
@@ -102,7 +99,7 @@ class AnalysisPipeline:
         # Highlight lines with high similarity indicators
         for index, line in enumerate(lines):
             stripped = line.strip()
-            
+
             # Skip empty lines
             if not stripped:
                 continue
@@ -115,6 +112,21 @@ class AnalysisPipeline:
 
             # Validate offsets
             if line_end <= line_start:
+                continue
+
+            line_tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*|\d+", stripped.lower()))
+            overlap_ratio = 0.0
+            if line_tokens and matched_tokens:
+                overlap_ratio = len(line_tokens & matched_tokens) / len(line_tokens)
+
+            if overlap_ratio >= 0.45:
+                highlights.append({
+                    "start": line_start,
+                    "end": line_end,
+                    "type": "plagiarism",
+                })
+                if len(highlights) >= 12:
+                    break
                 continue
 
             # Highlight indicators for plagiarism match:
@@ -145,6 +157,27 @@ class AnalysisPipeline:
             # Limit to avoid overwhelming display
             if len(highlights) >= 10:
                 break
+
+        if not highlights and lines:
+            for index, line in enumerate(lines):
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                if index < len(offsets):
+                    line_start, line_end = offsets[index]
+                else:
+                    continue
+                if line_end <= line_start:
+                    continue
+                highlights.append(
+                    {
+                        "start": line_start,
+                        "end": line_end,
+                        "type": "plagiarism" if token_sim >= semantic_sim else dominant_signal,
+                    }
+                )
+                if len(highlights) >= 3:
+                    break
 
         return highlights
 
@@ -222,8 +255,8 @@ class AnalysisPipeline:
                 "highlight_legend": self._highlight_legend(),
                 "known_match": known_match,
                 "reasoning": (
-                    f"Exact normalized match found in dataset ({known_match.get('path', 'unknown')}). "
-                    f"Source label: {label}."
+                    f"Exact normalized match found in dataset sample {known_match.get('filename', 'unknown')} "
+                    f"({known_match.get('path', 'unknown')}). Source label: {label}."
                 ),
             },
         }
@@ -240,6 +273,10 @@ class AnalysisPipeline:
         # -------------------------
         normalized_code, _ = self.normalizer.normalize(code)
         known_match = self.dataset_matcher.find_by_normalized_code(normalized_code)
+        pattern_match = self.dataset_matcher.find_best_pattern_match(
+            normalized_code,
+            language.lower() if language else None,
+        )
 
         # -------------------------
         # AST feature extraction
@@ -252,6 +289,12 @@ class AnalysisPipeline:
         normalized_language = language.lower() if language else None
 
         if known_match:
+            known_match = {
+                **known_match,
+                "filename": Path(known_match.get("path", "unknown")).name,
+                "match_type": "exact",
+                "match_score": "1.000",
+            }
             return self._build_exact_match_response(
                 normalized_code=normalized_code,
                 normalized_language=normalized_language,
@@ -419,6 +462,15 @@ class AnalysisPipeline:
             else "Similarity based on semantic, token, and structural overlap."
         )
 
+        response_match = pattern_match.copy() if pattern_match else None
+        matched_corpus_code = None
+        if response_match:
+            matched_corpus_code = response_match.pop("normalized_code", None)
+            reasoning += (
+                f" Closest corpus pattern: {response_match.get('filename', 'unknown')} "
+                f"[{response_match.get('label', 'UNKNOWN')}] with token-overlap score {response_match.get('match_score', '0.000')}."
+            )
+
         if normalized_language and normalized_language != "python":
             reasoning += " Structure signal uses language-agnostic heuristics for non-Python code."
 
@@ -434,6 +486,7 @@ class AnalysisPipeline:
             token_sim,
             semantic_sim,
             structure_sim,
+            matched_code=matched_corpus_code,
         )
         metrics = input_metrics or {
             "total_lines": len(normalized_code.splitlines()),
@@ -468,6 +521,7 @@ class AnalysisPipeline:
                 "highlights": highlights,
                 "source_code": normalized_code,
                 "highlight_legend": self._highlight_legend(),
+                "known_match": response_match,
                 "reasoning": reasoning
             }
         }

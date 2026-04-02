@@ -306,15 +306,29 @@ const ResultsPage = memo<ResultsPageProps>(({ data, onBack }) => {
                   language={selectedResult.language || 'unknown'}
                   highlights={selectedResult.explanation.highlights}
                 />
+                <div className="result-details" style={{ marginTop: '12px' }}>
+                  <div className="detail-row">
+                    <span>Reasoning:</span>
+                    <strong>{selectedResult.explanation.reasoning || 'No reasoning available.'}</strong>
+                  </div>
+                </div>
                 {selectedResult.explanation.known_match && (
                   <div className="result-details" style={{ marginTop: '12px' }}>
                     <div className="detail-row">
-                      <span>Exact Dataset Match:</span>
-                      <strong>Yes</strong>
+                      <span>Dataset Match Type:</span>
+                      <strong>{selectedResult.explanation.known_match.match_type || 'exact'}</strong>
+                    </div>
+                    <div className="detail-row">
+                      <span>Sample Name:</span>
+                      <strong>{selectedResult.explanation.known_match.filename || 'Unknown'}</strong>
                     </div>
                     <div className="detail-row">
                       <span>Source Label:</span>
                       <strong>{selectedResult.explanation.known_match.label || 'Unknown'}</strong>
+                    </div>
+                    <div className="detail-row">
+                      <span>Match Score:</span>
+                      <strong>{selectedResult.explanation.known_match.match_score || 'N/A'}</strong>
                     </div>
                     <div className="detail-row">
                       <span>Source Path:</span>
