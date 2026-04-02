@@ -71,52 +71,79 @@ class AnalysisPipeline:
         semantic_sim: float,
         structure_sim: float,
     ) -> list[dict[str, str | int]]:
+        """
+        Generate highlights showing matched code regions.
+        Highlights indicate:
+        - plagiarism: segments matching corpus patterns (token/semantic overlap)
+        - ai-detected: segments with AI-like structural characteristics
+        """
         highlights: list[dict[str, str | int]] = []
+        
+        if not normalized_code:
+            return highlights
+
         lines = normalized_code.splitlines()
         offsets = self._line_char_offsets(normalized_code)
 
-        if size_penalty and normalized_code:
-            highlights.append(
-                {
-                    "start": 0,
-                    "end": len(normalized_code),
-                    "type": "plagiarism",
-                }
-            )
+        # If size penalty applies, mark entire code as plagiarism match
+        if size_penalty:
+            highlights.append({
+                "start": 0,
+                "end": len(normalized_code),
+                "type": "plagiarism",
+            })
+            return highlights
 
+        # Determine highlight type based on signal dominance
+        dominant_signal = "plagiarism"
+        if semantic_sim > token_sim and semantic_sim > structure_sim:
+            dominant_signal = "ai-detected"
+
+        # Highlight lines with high similarity indicators
         for index, line in enumerate(lines):
-            i = index + 1
             stripped = line.strip()
+            
+            # Skip empty lines
             if not stripped:
                 continue
 
+            # Get line char offsets
             if index < len(offsets):
                 line_start, line_end = offsets[index]
             else:
-                line_start, line_end = (0, 0)
+                continue
 
+            # Validate offsets
             if line_end <= line_start:
                 continue
 
+            # Highlight indicators for plagiarism match:
+            # 1. Long lines (>120 chars) often contain substantial logic
             if len(stripped) > 120:
-                highlights.append(
-                    {
-                        "start": line_start,
-                        "end": line_end,
-                        "type": "ai-detected" if semantic_sim >= token_sim else "plagiarism",
-                    }
-                )
+                highlights.append({
+                    "start": line_start,
+                    "end": line_end,
+                    "type": "plagiarism" if semantic_sim >= 0.5 else dominant_signal,
+                })
 
-            if stripped.startswith(("def ", "class ", "for ", "while ", "if ")):
-                highlights.append(
-                    {
-                        "start": line_start,
-                        "end": line_end,
-                        "type": "plagiarism" if structure_sim >= 0.2 else "ai-detected",
-                    }
-                )
+            # 2. Lines with control flow keywords (strong structural markers)
+            elif stripped.startswith(("def ", "class ", "for ", "while ", "if ", "return ", "async ", "await ")):
+                highlights.append({
+                    "start": line_start,
+                    "end": line_end,
+                    "type": "plagiarism" if structure_sim >= 0.3 else dominant_signal,
+                })
 
-            if len(highlights) >= 8:
+            # 3. Lines with complex expressions (potential plagiarism)
+            elif any(op in stripped for op in [" = ", "==", "!=", ">=", "<="]) and len(stripped) > 30:
+                highlights.append({
+                    "start": line_start,
+                    "end": line_end,
+                    "type": dominant_signal,
+                })
+
+            # Limit to avoid overwhelming display
+            if len(highlights) >= 10:
                 break
 
         return highlights
@@ -163,6 +190,15 @@ class AnalysisPipeline:
 
         ai_probability = 8.0 if label == "HUMAN" else 92.0 if label == "AI" else 50.0
 
+        # For exact match, highlight the entire code as plagiarism since it's 100% corpus match
+        highlights = [
+            {
+                "start": 0,
+                "end": len(normalized_code),
+                "type": "plagiarism",
+            }
+        ] if normalized_code else []
+
         return {
             "plagiarism_percentage": 99.0,
             "ai_probability": ai_probability,
@@ -181,13 +217,7 @@ class AnalysisPipeline:
                     "semantic": "high",
                     "structure": "high",
                 },
-                "highlights": [
-                    {
-                        "start": 0,
-                        "end": len(normalized_code),
-                        "type": "plagiarism",
-                    }
-                ] if normalized_code else [],
+                "highlights": highlights,
                 "source_code": normalized_code,
                 "highlight_legend": self._highlight_legend(),
                 "known_match": known_match,
@@ -256,14 +286,37 @@ class AnalysisPipeline:
             if inserted:
                 self.faiss_index.add(vector)
 
+            line_count = len([l for l in normalized_code.splitlines() if l.strip()])
+            metrics = input_metrics or {
+                "total_lines": len(normalized_code.splitlines()),
+                "non_empty_lines": line_count,
+                "char_count": len(code),
+                "token_count_estimate": len(re.findall(r"[A-Za-z_][A-Za-z0-9_]*|\d+|\S", normalized_code)),
+                "comment_lines_estimate": 0,
+            }
+
             return {
                 "plagiarism_percentage": 0.0,
                 "ai_probability": 0.0,
                 "confidence": "low",
                 "explanation": {
+                    "token_similarity": 0.0,
+                    "semantic_similarity": 0.0,
+                    "structure_similarity": 0.0,
+                    "code_lines": line_count,
+                    "size_penalty_applied": False,
+                    "db_inserted": inserted,
+                    "language": normalized_language,
+                    "metrics": metrics,
+                    "signal_bands": {
+                        "token": "low",
+                        "semantic": "low",
+                        "structure": "low",
+                    },
+                    "highlights": [],
                     "source_code": normalized_code,
                     "highlight_legend": self._highlight_legend(),
-                    "reasoning": "First submission baseline"
+                    "reasoning": "First submission baseline—no corpus matches found."
                 }
             }
 
