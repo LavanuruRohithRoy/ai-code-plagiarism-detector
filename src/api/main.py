@@ -10,7 +10,7 @@ from src.utils.config import load_settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    sync_faiss_with_db()
+    #sync_faiss_with_db()
     yield
 
 
@@ -40,6 +40,10 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(router)
+
+    @app.get("/")
+    def root():
+        return{"status": "ok"}
 
     @app.get("/health", tags=["system"])
     def health() -> dict[str, str]:
