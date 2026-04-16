@@ -1,14 +1,15 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-
+from scripts.init_db import init_db
 from src.api.dependencies import sync_faiss_with_db
 from src.api.routes import router
 from src.utils.config import load_settings
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
+    init_db()
     sync_faiss_with_db()
     yield
 
@@ -22,7 +23,7 @@ def create_app() -> FastAPI:
         docs_url=settings.docs_url,
         redoc_url=settings.redoc_url,
         openapi_url=settings.openapi_url,
-        lifespan=lifespan,
+        lifespan=lifespan
     )
 
     app.add_middleware(
