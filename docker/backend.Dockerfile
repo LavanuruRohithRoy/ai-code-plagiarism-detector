@@ -20,11 +20,10 @@ RUN python -c "from transformers import AutoTokenizer, AutoModel; \
 	AutoTokenizer.from_pretrained('microsoft/codebert-base'); \
 	AutoModel.from_pretrained('microsoft/codebert-base')"
 
-ENV PYTHONPATH=/app
 ENV HF_HOME=/app/hf_cache
 ENV TRANSFORMERS_OFFLINE=0
 ENV HF_HUB_DISABLE_TELEMETRY=1
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug"]
